@@ -2,11 +2,11 @@
 
 ## Summary
 
-I have seen customers create various solutions around a “get users teams name” implemented Microsoft Dynamics 365 CE/CRM. At the time I am writing this the most common solution is a synchronous XHR call to the platform to get the data each time a check is a user is on a team. I am going to propose an approach and pattern that will work for most any slowly changing dataset. So, by slowly changing dataset I mean data that is relatively static and at the most changes less then weekly but usually only occasionally within a year. We will demonstrate this with a JavaScript Async Await pattern with some newly introduced functionality added to onload, onsave and ribbon events on D365CE forms and also needs modden browsers that support ES6.
+I have seen customers create various solutions around a “get users teams name” implemented Microsoft Dynamics 365 CE/CRM. At the time I am writing this the most common solution is a synchronous XHR call to the platform to get the data each time a check is a user is on a team. I am going to propose an approach and pattern that will work for most any slowly changing dataset. So, by slowly changing dataset I mean data that is relatively static and at the most changes less then weekly but usually only occasionally within a year. We will demonstrate this with a JavaScript Async Await pattern with some newly introduced functionality added to onload, onsave and ribbon events on D365CE forms and also needs modern browsers that support ES6.
  
 ## History
 
-A common design pattern in use today is to enable/disable or hide/show client-side form attributes as a part of controlling a business logic form flow. This has been achieved with .js in several different patterns. The challenge is that quite a few patterns can cause poor client-side performance, especially in high latency environments. 
+A common design pattern in use today is to enable/disable or hide/show client-side form attributes as a part of controlling a business logic form flow. This has been achieved with JavaScript  in several different patterns. The challenge is that quite a few patterns can cause poor client-side performance, especially in high latency environments. 
 
 Here are some example conversations from the Microsoft Dynamics CRM Forum community on the subject:
 
@@ -14,7 +14,7 @@ Here are some example conversations from the Microsoft Dynamics CRM Forum commun
 
 While these answers may have been acceptable at the time, there are a couple patterns in the community responses that we want to avoid.
 
-Lets take a look at some patterns we want to avoid or replace.
+Let’s look at some patterns we want to avoid or replace.
 
 ## Anti-patterns
 
@@ -109,7 +109,7 @@ var Spark30Common = window.Spark30Common || {};
     }
 }
 ```
-Notice the join to team to add the filter for teamtype because I have seen this query get real ugly when only using teammembership if the user is on a bunch of access teams that are system generated one team for each record. The bottom line here is know your data and test throughly.
+Notice the join to 'team' to add the filter for 'teamtype' because I have seen this query get real ugly when only using 'teammembership' if the user is on a bunch of access teams that are system generated one team for each record. The bottom line here is know your data and test throughly.
 
 Also notice the code for the sync XHR request
 
@@ -127,7 +127,7 @@ Here is what a fiddler trace might look like with a first and second form load
 
 ![Antipattern first and second form load](./FiddlerAntiPattern1st2nd.png)
 
-You are seeing a large number sync XHR request and they are happening in series. I this particular example you see two sync calls to teams referencing the code above because there is a event onload and in the one in the ribbon. All the calls take about the same 4s on a first time load (cold Load) as the second and subsiquent loads (warm loads). 
+You are seeing a large number sync XHR request and they are happening in series. I this particular example you see two sync calls to 'teams' referencing the code above because there is a event onload and in the one in the ribbon. All the calls take about the same 4s on a first time load (cold Load) as the second and subsiquent loads (warm loads). 
 
 And a fiddler trace with 200ms latency takes the 4s and turns it into 8s and nothing is different but the poor network.
 
@@ -137,7 +137,7 @@ So lets look at some new stratiges to improve this performance on the form load 
 
 ## New pattern
 
-This particular strategey I like to refer to as "minimize the number of calls" and in this example we will look at the new functionality added into the platform async onload and ribbon event handlers. By returning a promise to the onload and ribbon events we will effectivly be able to block the UI while the async processes and the calls will process more parallel than sync calls. But the largest savings is going to be we are only making the call one time and using the cached data until the page session ends.
+This particular strategy I like to refer to as "minimize the number of calls" and in this example we will look at the new functionality added into the platform async onload and ribbon event handlers. By returning a promise to the onload and ribbon events we will effectively be able to block the UI while the async processes and the calls will process more parallel than sync calls. But the largest savings is going to be we are only making the call one time and using the cached data until the page session ends.
 
 ```js
 /**
@@ -229,9 +229,9 @@ The next time the form loads it will use the browsers cached data and not call t
         **// get configuration values from browser cache
         var storedUserTeams = sessionStorage.getItem(sessionStorageId);**
 
-For more information on [sessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) or [loaclStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) see the links here or in the Additional Storage section below.  
+For more information on [sessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) or [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) see the links here or in the Additional Storage section below.  
 
-Now when we look at a fiddler trace with the performance improvements we see one call to teams in the first (cold) load and no calls to teams on the subsquient (warm) loads there after.
+Now when we look at a fiddler trace with the performance improvements we see one call to 'teams' in the first (cold) load and no calls to 'teams' on the subsequent (warm) loads there after. Please keep in mind that other performance tuning was also applied for other calls as well so we are looking at a result for the 'teams' calls going form 2 calls (the same for both cold and warm load) before the performance enhancements and after the enhancements we go to only one call on the cold load and no calls on warm loads.
 
 ![New pattern first and second form load](./FiddlerNewPattern1st2nd.png)
 
@@ -243,16 +243,17 @@ Many thanks go out to my fellow co-workers without this blog would not be possib
 - @melody.universe@microsoft.com
 - @jeparson@microsoft.com
 
-
 ## Additional information
 
 [sessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage)
 
-[loaclStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
+[localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
 
 [Get a value from Dynamics 365 CE API with Async Await](https://community.dynamics.com/crm/b/crminthefield/posts/get-a-value-from-dynamics-365-ce-api-with-async-await-484252633)
 
 [async function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function)
+
+[Browser support](https://docs.microsoft.com/en-us/power-apps/developer/model-driven-apps/best-practices/business-logic/interact-http-https-resources-asynchronously#browser-support)
 
 [^1]:[Synchronous request](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Synchronous_and_Asynchronous_Requests#synchronous_request)
 
@@ -264,19 +265,11 @@ Many thanks go out to my fellow co-workers without this blog would not be possib
 
 [code](https://github.com/Ben-Fishin/Dynamics-365-CE-Client-Side-Scripting-Patterns)
 
+Here are a few Microsoft service deliveries that identify sync XHR issues in the findings report (please ask your Microsoft CSAM or check out [Power Platform and Dynamics 365 Service Offerings](https://community.dynamics.com/crm/b/crminthefield/posts/pfe-dynamics-365-service-offerings)):
+ - [Dynamics 365 Customer Engagement Assessment](https://community.dynamics.com/cfs-file/__key/communityserver-blogs-components-weblogfiles/00-00-00-17-38/Dynamics-365-Customer-Engagement-Assessment-_2D00_-Datasheet.pdf)
+ - [Dynamics 365 Customer Engagement: Code Review](https://community.dynamics.com/cfs-file/__key/communityserver-blogs-components-weblogfiles/00-00-00-17-38/Dynamics-365-Customer-Engagement-Code-Review.pdf)
+ - [Dynamics 365 Customer Engagement: Performance Review](https://community.dynamics.com/cfs-file/__key/communityserver-blogs-components-weblogfiles/00-00-00-17-38/Datasheet_2D00_Dynamics365PerformanceReview.pdf)
 
-Here are a few Microsoft service deliveries that identify sync XHR issues in the findings report (please ask your Microsoft CSAM for additional information):
- - Dynamics 365 CE Assessment
- - Dynamics 365 CE: Code Review
- - Dynamics 365 CE: Performance Review
-
-  [DELETE find link for xhr browser deprecation](https://stackoverflow.com/questions/30876093/will-chrome-and-other-browsers-drop-support-for-synchronous-xmlhttprequest)
- 
- Internet Explorer is deprecated for use with Dynamics 365 CE 
-
-[Lifecycle FAQ - Internet Explorer and Microsoft Edge](https://docs.microsoft.com/en-us/lifecycle/faq/internet-explorer-microsoft-edge)
-
-[DELETE Will Chrome and other browsers drop support for Synchronous XMLHttpRequest?](https://stackoverflow.com/questions/30876093/will-chrome-and-other-browsers-drop-support-for-synchronous-xmlhttprequest)
 
 [^disclaimer]:
 ```js
