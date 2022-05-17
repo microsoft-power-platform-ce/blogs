@@ -2,13 +2,13 @@
 
 ## Summary
 
-I have seen customers create various solutions around a “get users teams name” implemented Microsoft Dynamics 365 CE/CRM. At the time I am writing this the most common solution is a synchronous XHR call to the platform to get the data each time a check is a user is on a team. I am going to propose an approach and pattern that will work for most any slowly changing dataset. So, by slowly changing dataset I mean data that is relatively static and at the most changes less then weekly but usually only occasionally within a year. We will demonstrate this with a JavaScript Async Await pattern with some newly introduced functionality added to onload, onsave and ribbon events on D365CE forms and also needs modern browsers that support ES6.
+I have seen customers create various solutions around a “get users teams name” implemented Microsoft Dynamics 365 CE/CRM. At the time I am writing this the most common solution is a synchronous XHR call to the platform to get the data each time a check is a user is on a team. I am going to propose an approach and pattern that will work for most any slowly changing dataset. So, by slowly changing dataset I mean data that is relatively static and at the most changes less than weekly but usually only occasionally within a year. We will demonstrate this with a JavaScript Async Await pattern with some newly introduced functionality added to onload, onsave and ribbon events on D365CE forms and needs modern browsers that support ES6.
  
 ## History
 
 A common design pattern in use today is to enable/disable or hide/show client-side form attributes as a part of controlling a business logic form flow. This has been achieved with JavaScript  in several different patterns. The challenge is that quite a few patterns can cause poor client-side performance, especially in high latency environments. 
 
-Here are some example conversations from the Microsoft Dynamics CRM Forum community on the subject:
+Here is an example conversation from the Microsoft Dynamics CRM Forum community on the subject:
 
    [(+) How to retrieve a user's teams? Javascript. - Microsoft Dynamics CRM Forum Community Forum](https://community.dynamics.com/crm/f/microsoft-dynamics-crm-forum/218804/how-to-retrieve-a-user-s-teams-javascript)
 
@@ -18,7 +18,7 @@ Let’s look at some patterns we want to avoid or replace.
 
 ## Anti-patterns
 
-My co-worker, @ddevine@microsoft.com and I have culminated some examples that we have seen from a variety of customers for an internal presentation and demo. 
+My co-worker, [Darrin Devine](https://github.com/ddevine-msft) and I have culminated some examples that we have seen from a variety of customers for an internal presentation and demo. 
 
 Again this sample code is an **anti-pattern to avoid**.
 
@@ -238,24 +238,26 @@ Now when we look at a fiddler trace with the performance improvements we see one
 ## Special Thanks
 
 Many thanks go out to my fellow co-workers without this blog would not be possible. 
-
-- @ddevine@microsoft.com
-- @melody.universe@microsoft.com
-- @jeparson@microsoft.com
+- [Darrin Devine](https://github.com/ddevine-msft)
+- [Melody Universe](https://github.com/melody-universe)
+- [Jesse Parsons](https://github.com/JesseParsons)
 
 ## Additional information
+
+[Sample code](https://github.com/Ben-Fishin/Dynamics-365-CE-Client-Side-Scripting-Patterns)
 
 [sessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage)
 
 [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
 
+Here are a few Microsoft service deliveries that identify sync XHR issues in the findings report (please ask your Microsoft CSAM or check out [Power Platform and Dynamics 365 Service Offerings](https://community.dynamics.com/crm/b/crminthefield/posts/pfe-dynamics-365-service-offerings)):
+ - [Dynamics 365 Customer Engagement Assessment](https://community.dynamics.com/cfs-file/__key/communityserver-blogs-components-weblogfiles/00-00-00-17-38/Dynamics-365-Customer-Engagement-Assessment-_2D00_-Datasheet.pdf)
+ - [Dynamics 365 Customer Engagement: Code Review](https://community.dynamics.com/cfs-file/__key/communityserver-blogs-components-weblogfiles/00-00-00-17-38/Dynamics-365-Customer-Engagement-Code-Review.pdf)
+ - [Dynamics 365 Customer Engagement: Performance Review](https://community.dynamics.com/cfs-file/__key/communityserver-blogs-components-weblogfiles/00-00-00-17-38/Datasheet_2D00_Dynamics365PerformanceReview.pdf)
+
 [Get a value from Dynamics 365 CE API with Async Await](https://community.dynamics.com/crm/b/crminthefield/posts/get-a-value-from-dynamics-365-ce-api-with-async-await-484252633)
 
 [async function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function)
-
-[Browser support](https://docs.microsoft.com/en-us/power-apps/developer/model-driven-apps/best-practices/business-logic/interact-http-https-resources-asynchronously#browser-support)
-
-[^1]:[Synchronous request](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Synchronous_and_Asynchronous_Requests#synchronous_request)
 
 [Asynchronous OnLoad event handler support](https://docs.microsoft.com/en-us/powerapps/developer/model-driven-apps/clientapi/reference/events/form-onload#asynchronous-onload-event-handler-support)
 
@@ -263,13 +265,9 @@ Many thanks go out to my fellow co-workers without this blog would not be possib
 
 [Ribbon Custom Rule](https://docs.microsoft.com/en-us/powerapps/developer/model-driven-apps/define-ribbon-enable-rules#custom-rule)
 
-[code](https://github.com/Ben-Fishin/Dynamics-365-CE-Client-Side-Scripting-Patterns)
+[Browser support](https://docs.microsoft.com/en-us/power-apps/developer/model-driven-apps/best-practices/business-logic/interact-http-https-resources-asynchronously#browser-support)
 
-Here are a few Microsoft service deliveries that identify sync XHR issues in the findings report (please ask your Microsoft CSAM or check out [Power Platform and Dynamics 365 Service Offerings](https://community.dynamics.com/crm/b/crminthefield/posts/pfe-dynamics-365-service-offerings)):
- - [Dynamics 365 Customer Engagement Assessment](https://community.dynamics.com/cfs-file/__key/communityserver-blogs-components-weblogfiles/00-00-00-17-38/Dynamics-365-Customer-Engagement-Assessment-_2D00_-Datasheet.pdf)
- - [Dynamics 365 Customer Engagement: Code Review](https://community.dynamics.com/cfs-file/__key/communityserver-blogs-components-weblogfiles/00-00-00-17-38/Dynamics-365-Customer-Engagement-Code-Review.pdf)
- - [Dynamics 365 Customer Engagement: Performance Review](https://community.dynamics.com/cfs-file/__key/communityserver-blogs-components-weblogfiles/00-00-00-17-38/Datasheet_2D00_Dynamics365PerformanceReview.pdf)
-
+[Synchronous request](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Synchronous_and_Asynchronous_Requests#synchronous_request)
 
 [^disclaimer]:
 ```js
