@@ -215,6 +215,7 @@ OData-Version: 4.0
 After the execution of a Webapi Request the response will look like this
 
 **Response Example**
+
 ```http
 {
   "@odata.context": "[Organization URI]/api/data/v9.1/$metadata#Microsoft.Dynamics.CRM.BulkDeleteResponse",
@@ -225,3 +226,5 @@ After the execution of a Webapi Request the response will look like this
 The bulk delete job can then be found in the Microsoft Power Platform admin center by going to Environments > [select an environment] > Settings > Data management > Bulk deletion.
 
 ![Deletion Job](./DeletionJob.png)
+
+Hopefully, seeing these examples you are able to see how audit data can be in more targeted manner.
