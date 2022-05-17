@@ -1,8 +1,12 @@
-# Get User Team Name from browser cache in Dataverse Model Driven App
+# Get a User's Team Name from browser cache in Dataverse Model Driven App
 
 ## Summary
 
-I have seen customers create various solutions around a “get users teams name” implemented Microsoft Dynamics 365 CE/CRM. At the time I am writing this the most common solution is a synchronous XHR call to the platform to get the data each time a check is a user is on a team. I am going to propose an approach and pattern that will work for most any slowly changing dataset. So, by slowly changing dataset I mean data that is relatively static and at the most changes less than weekly but usually only occasionally within a year. We will demonstrate this with a JavaScript Async Await pattern with some newly introduced functionality added to onload, onsave and ribbon events on D365CE forms and needs modern browsers that support ES6.
+I have seen customers create various solutions to get a user's team name implemented in Microsoft Dataverse Model Driven Apps. At the time I am writing this the most common solution is a synchronous (sync) XHR call to the platform to get data each time it is needed to determine if a user is a member of a team. I am going to propose an approach and pattern that will work for any slowly changing dataset (for example, data that changes as often as once a week or as little as once a year). 
+
+This approach includes a JavaScript Async Await pattern with some newly introduced functionality added to onload, onsave and ribbon events on Model Driven App forms. 
+
+NOTE: Async Await requires modern browsers that support ES6
  
 ## History
 
@@ -12,15 +16,15 @@ Here is an example conversation from the Microsoft Dynamics CRM Forum community 
 
    [(+) How to retrieve a user's teams? Javascript. - Microsoft Dynamics CRM Forum Community Forum](https://community.dynamics.com/crm/f/microsoft-dynamics-crm-forum/218804/how-to-retrieve-a-user-s-teams-javascript)
 
-While these answers may have been acceptable at the time, there are a couple patterns in the community responses that we want to avoid.
+While these answers may have been acceptable at the time, there are a couple of patterns in the community responses that we want to avoid.
 
-Let’s look at some patterns we want to avoid or replace.
+Let’s look at some anti-patterns we want to avoid or replace.
 
 ## Anti-patterns
 
-My co-worker, [Darrin Devine](https://github.com/ddevine-msft) and I have culminated some examples that we have seen from a variety of customers for an internal presentation and demo. 
+SHere is a recent example based on patterns observerd from a variety of customers for an internal presentation and demo. 
 
-Again this sample code is an **anti-pattern to avoid**.
+Again, this sample code is an **anti-pattern to avoid**.
 
 Please note [^disclaimer]
 
@@ -109,7 +113,7 @@ var Spark30Common = window.Spark30Common || {};
     }
 }
 ```
-Notice the join to 'team' to add the filter for 'teamtype' because I have seen this query get real ugly when only using 'teammembership' if the user is on a bunch of access teams that are system generated one team for each record. The bottom line here is know your data and test throughly.
+In the code above it is important to include the filter on 'teamtype' from the join from 'teammembership' to 'teams'. Withouth this filter the data may inavertantly be including system generated 'access teams' based on a team created per record. This data is typically unnecessay for the team 'name' check and can return a large number of rows. The bottom line here is know your data and test thoroughly.
 
 Also notice the code for the sync XHR request
 
@@ -119,25 +123,25 @@ Also notice the code for the sync XHR request
         //setting "false" to force Synchronous
         request.open('GET', requestUrl, false);**
 
-This code will block the UI while and wait for the response and if there are multiple sync XHR request they will operate in series in which they are called.
+This code will block the UI while the form and ribbon load and wait for the response. If there are multiple sync XHR request they will operate in the series in which they are called.
 
-Because this call is triggered onload and from the ribbon we will retreive this set of values twice from the platform server on each time the form is loaded.   
+Because this event is regestered on the from onload and the ribbon the code we will retrieve this set of values twice from the platform each time the form is loaded.   
 
-Here is what a fiddler trace might look like with a first and second form load
+Here is what a fiddler trace might look like with a first and second form load. 
 
 ![Antipattern first and second form load](./FiddlerAntiPattern1st2nd.png)
 
-You are seeing a large number sync XHR request and they are happening in series. I this particular example you see two sync calls to 'teams' referencing the code above because there is a event onload and in the one in the ribbon. All the calls take about the same 4s on a first time load (cold Load) as the second and subsiquent loads (warm loads). 
+I this example you are seeing a large number of sync XHR request, and they are happening in series. In this example you see two calls to 'teams' that reference the anti-pattern code above. All of the calls take about the same 4 seconds on a first-time (cold) load as the second and subsequent (warm) loads. 
 
-And a fiddler trace with 200ms latency takes the 4s and turns it into 8s and nothing is different but the poor network.
+And the example fiddler trace below with added 200 millisecond latency takes the 4 seconds and turns it into 8 seconds with nothing different but the poor network between the client machine and the server.
 
 ![Antipattern with 200ms latency](./FiddlerAntiPattern200Latency.png)
 
-So lets look at some new stratiges to improve this performance on the form load time.
+So let's look at some new strategies to improve this performance on the form load time.
 
 ## New pattern
 
-This particular strategy I like to refer to as "minimize the number of calls" and in this example we will look at the new functionality added into the platform async onload and ribbon event handlers. By returning a promise to the onload and ribbon events we will effectively be able to block the UI while the async processes and the calls will process more parallel than sync calls. But the largest savings is going to be we are only making the call one time and using the cached data until the page session ends.
+This strategy I like to refer to as "minimize the number of calls" and in this example we will look at the new functionality added into the platform async [onload](https://docs.microsoft.com/en-us/powerapps/developer/model-driven-apps/clientapi/reference/events/form-onload#asynchronous-onload-event-handler-support) and [ribbon](https://docs.microsoft.com/en-us/powerapps/developer/model-driven-apps/define-ribbon-enable-rules#custom-rule) event handlers. By returning a promise to the onload and ribbon events we will effectively be able to block the UI while the async calls are processed in a more parallel fasion. But the largest saving is going to be that the call is only going to be made one time and from them on it will be using the cached data until the page session ends.
 
 ```js
 /**
@@ -212,11 +216,11 @@ This particular strategy I like to refer to as "minimize the number of calls" an
 ```
 Above is a section of our common.js functions in the namespace of "Spark30Common". Notice Xrm.WebApi.retrieveRecord returns a promise that we are going to "await" and we are going to define our function as "async" so our function ("UserIsTeamMember") returns a promise.
 
-To learn more about working with Async Await promise patterns please refer to another performance  blog post on the subject:
+To learn more about working with Async Await promise patterns please refer to another performance blog post on the subject:
 
    [Get a value from Dynamics 365 CE API with Async Await](https://community.dynamics.com/crm/b/crminthefield/posts/get-a-value-from-dynamics-365-ce-api-with-async-await-484252633)
 
-And here is where we get the biggest bang for our buck, by caching the slowly changing data in the browsers cache we are going to store the data.
+The increase in performance is going to be achieved by caching the slowly changing data in the browsers sessionStorage cache in the foloowing lines of code. 
 
         **// if session storage with name does not exist populate it 
         if (!sessionStorage.getItem(sessionStorageId)) {
@@ -224,14 +228,14 @@ And here is where we get the biggest bang for our buck, by caching the slowly ch
         //populate cache with owner teams response
         sessionStorage[sessionStorageId] = JSON.stringify(userteams);**
 
-The next time the form loads it will use the browsers cached data and not call the server at all.
+The next time the form loads it will use the browsers cached data and not need to make another call to the server.
 
         **// get configuration values from browser cache
         var storedUserTeams = sessionStorage.getItem(sessionStorageId);**
 
 For more information on [sessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) or [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) see the links here or in the Additional Storage section below.  
 
-Now when we look at a fiddler trace with the performance improvements we see one call to 'teams' in the first (cold) load and no calls to 'teams' on the subsequent (warm) loads there after. Please keep in mind that other performance tuning was also applied for other calls as well so we are looking at a result for the 'teams' calls going form 2 calls (the same for both cold and warm load) before the performance enhancements and after the enhancements we go to only one call on the cold load and no calls on warm loads.
+Now when looking at a fiddler trace with the performance improvements, we see one call to 'teams' in the first (cold) load and no calls to 'teams' on the subsequent (warm) loads thereafter. Please keep in mind that other performance tuning was also applied for other calls as well so we are looking at a result for the 'teams' calls going form 2 calls (the same for both cold and warm load) before the performance enhancements and after the enhancements it's reduced to only one call on the cold load and no calls on warm loads.
 
 ![New pattern first and second form load](./FiddlerNewPattern1st2nd.png)
 
