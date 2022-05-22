@@ -22,7 +22,7 @@ Let’s look at some anti-patterns we want to avoid or replace.
 
 ## Anti-patterns
 
-SHere is a recent example based on patterns observerd from a variety of customers for an internal presentation and demo. 
+SHere is a recent example based on patterns observed from a variety of customers for an internal presentation and demo. 
 
 Again, this sample code is an **anti-pattern to avoid**.
 
@@ -113,7 +113,7 @@ var Spark30Common = window.Spark30Common || {};
     }
 }
 ```
-In the code above it is important to include the filter on 'teamtype' from the join from 'teammembership' to 'teams'. Withouth this filter the data may inavertantly be including system generated 'access teams' based on a team created per record. This data is typically unnecessay for the team 'name' check and can return a large number of rows. The bottom line here is know your data and test thoroughly.
+In the code above it is important to include the filter on 'teamtype' from the join from 'teammembership' to 'teams'. Without this filter the data may inadvertently be including system generated 'access teams' based on a team created per record. This data is typically unnecessary for the team 'name' check and can return a large number of rows. The bottom line here is know your data and test thoroughly.
 
 Also notice the code for the sync XHR request
 
@@ -125,7 +125,7 @@ Also notice the code for the sync XHR request
 
 This code will block the UI while the form and ribbon load and wait for the response. If there are multiple sync XHR request they will operate in the series in which they are called.
 
-Because this event is regestered on the from onload and the ribbon the code we will retrieve this set of values twice from the platform each time the form is loaded.   
+Because this event is registered on the from onload and the ribbon the code we will retrieve this set of values twice from the platform each time the form is loaded.   
 
 Here is what a fiddler trace might look like with a first and second form load. 
 
@@ -141,7 +141,7 @@ So let's look at some new strategies to improve this performance on the form loa
 
 ## New pattern
 
-This strategy I like to refer to as "minimize the number of calls" and in this example we will look at the new functionality added into the platform async [onload](https://docs.microsoft.com/en-us/powerapps/developer/model-driven-apps/clientapi/reference/events/form-onload#asynchronous-onload-event-handler-support) and [ribbon](https://docs.microsoft.com/en-us/powerapps/developer/model-driven-apps/define-ribbon-enable-rules#custom-rule) event handlers. By returning a promise to the onload and ribbon events we will effectively be able to block the UI while the async calls are processed in a more parallel fasion. But the largest saving is going to be that the call is only going to be made one time and from them on it will be using the cached data until the page session ends.
+This strategy I like to refer to as "minimize the number of calls" and in this example we will look at the new functionality added into the platform async [onload](https://docs.microsoft.com/en-us/powerapps/developer/model-driven-apps/clientapi/reference/events/form-onload#asynchronous-onload-event-handler-support) and [ribbon](https://docs.microsoft.com/en-us/powerapps/developer/model-driven-apps/define-ribbon-enable-rules#custom-rule) event handlers. By returning a promise to the onload and ribbon events we will effectively be able to block the UI while the async calls are processed in a more parallel fashion. But the largest saving is going to be that the call is only going to be made one time and from them on it will be using the cached data until the page session ends.
 
 ```js
 /**
@@ -220,7 +220,7 @@ To learn more about working with Async Await promise patterns please refer to an
 
    [Get a value from Dynamics 365 CE API with Async Await](https://community.dynamics.com/crm/b/crminthefield/posts/get-a-value-from-dynamics-365-ce-api-with-async-await-484252633)
 
-The increase in performance is going to be achieved by caching the slowly changing data in the browsers sessionStorage cache in the foloowing lines of code. 
+The increase in performance is going to be achieved by caching the slowly changing data in the browsers sessionStorage cache in the following lines of code. 
 
         **// if session storage with name does not exist populate it 
         if (!sessionStorage.getItem(sessionStorageId)) {
