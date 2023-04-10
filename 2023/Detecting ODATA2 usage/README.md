@@ -5,7 +5,7 @@
 [Dataverse OData v2.0 Service removal](https://learn.microsoft.com/en-us/power-platform/important-changes-coming#dataverse-odata-v20-service-removal) date is April 30, 2023. The [Product Group post](https://powerapps.microsoft.com/en-us/blog/odata-v2-0-service-removal-date-announcement/) has indicated these requests make up a small portion of the overall API traffic to Dataverse. Although, small in quantity the impact to your origination may be large. I've encountered many customers unknowingly using customizations making requests to Dataverse OData v2.0 endpoint.  I feel it's important to try minimize the possibility of impact on an environment. In this post we'll explorer some methods to find these requests in your environment.
 
 - Topics
-  - Importance of Solution Checker and one of it's limitations
+  - Importance of Solution Checker and one of its limitations
   - Importance of ensuring both Microsoft and 3rd party solutions are updated
   - Using telemetry from Dataverse Application Insights to assist in finding requests to "xrmservices/2011/organizationdata.svc" endpoint
   - Using Browser Debugging Tools
@@ -125,7 +125,7 @@ Let's look at some example queries useful for finding "organizationdata.svc" req
 Keeping in mind the section above we'll look at some example queries for reporting requests. "xrmservices/2011/organizationdata.svc" endpoint can be logged in 'dependencies' or 'requests' tables.
 
 - **'dependencies'** [of type 'UCI Requests'](https://learn.microsoft.com/en-us/power-platform/admin/telemetry-events-model-driven-apps#what-kind-of-data-is-available-for-uci-outbound-network-requests) are calls to other dependencies made by Unified Interface to render a certain page. They might be outgoing calls to Dataverse or to other integrations. For the purpose of this topic we **consider any 'OrganizationData.svc' requests logged in 'dependencies' table directly related to client side customizations**.
-- **'requests'** are most likely originating outside the Model Driven App(Power BI, Power Shell, Code...). I don't feel confident saying there isn't a scenario where client-side customizations log to 'requests'. For example a "OrganizationData.svc" request from an HTML Web Resource would likely log to 'requests' table. If a request has a session_Id that's not all zeros I'd suspect that's from client-side customizations.
+- **'requests'** are most likely originating outside the Model Driven App(Power BI, Power Shell, Code...). I don't feel confident saying there isn't a scenario where client-side customizations log to 'requests'. For example a "OrganizationData.svc" request from an HTML Web Resource would likely log to 'requests' table. If a request has a session_Id that's not all zeros I'd suspect it's from client-side customizations.
 
 ##### **Most basic detection queries**
 
@@ -144,7 +144,7 @@ dependencies
 | summarize count()
 ```
 
-If these queries return a count above zero then I suggest moving onto some advanced queries. Examples continue below.
+If these queries return a count above zero, then I suggest moving onto some advanced queries. Examples continue below.
 
 ##### **Getting More Details**
 
