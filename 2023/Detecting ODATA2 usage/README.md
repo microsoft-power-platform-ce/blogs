@@ -1,8 +1,11 @@
 # Detecting OData v2.0 Usage in Dataverse
 
+## Important Revisions
+Updated April 12, 2023  -  OData2 service removal is postponed. Will not be removed on April 30, 2023
+
 ## Overview
 
-[Dataverse OData v2.0 Service removal](https://learn.microsoft.com/en-us/power-platform/important-changes-coming#dataverse-odata-v20-service-removal) date is April 30, 2023. The [Product Group post](https://powerapps.microsoft.com/en-us/blog/odata-v2-0-service-removal-date-announcement/) has indicated these requests make up a small portion of the overall API traffic to Dataverse. Although, small in quantity the impact to your origination may be large. I've encountered many customers unknowingly using customizations making requests to Dataverse OData v2.0 endpoint.  I feel it's important to try minimize the possibility of impact on an environment. In this post we'll explorer some methods to find these requests in your environment.
+[Dataverse OData v2.0 Service removal](https://learn.microsoft.com/en-us/power-platform/important-changes-coming#dataverse-odata-v20-service-removal) date has been shifting but the most recent decision is not to remove it on April 30, 2023.  The [Product Group post](https://powerapps.microsoft.com/en-us/blog/odata-v2-0-service-removal-date-announcement/) has indicated these requests make up a small portion of the overall API traffic to Dataverse. Although, small in quantity the impact to your origination may be large. I've encountered many customers unknowingly using customizations making requests to Dataverse OData v2.0 endpoint.  I feel it's important to try minimize the possibility of impact on an environment. In this post we'll explorer some methods to find these requests in your environment.
 
 - Topics
   - Importance of Solution Checker and one of its limitations
