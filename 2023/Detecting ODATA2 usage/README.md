@@ -1,6 +1,7 @@
 # Detecting OData v2.0 Usage in Dataverse
 
 ## Important Revisions
+
 Updated April 12, 2023  -  OData2 service removal is postponed. Will not be removed on April 30, 2023
 
 ## Overview
@@ -12,10 +13,11 @@ Updated April 12, 2023  -  OData2 service removal is postponed. Will not be remo
   - Importance of ensuring both Microsoft and 3rd party solutions are updated
   - Using telemetry from Dataverse Application Insights to assist in finding requests to "xrmservices/2011/organizationdata.svc" endpoint
   - Using Browser Debugging Tools
+  - Updating your Code
 
 ### Solution Checker
 
-Use the [Solution Checker](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/use-powerapps-checker) to detect any JavaScript web resource code. The rule [web-avoid-crm2011-service-odata](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/powerapps-checker/rules/web/avoid-crm2011-service-odata) should detect usage in client-side code. Recommendations for updating code can be found in [this](https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/best-practices/business-logic/do-not-use-odata-v2-endpoint?tabs=odatav2) documentation.
+Use the [Solution Checker](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/use-powerapps-checker) to detect any JavaScript web resource code. The rule [web-avoid-crm2011-service-odata](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/powerapps-checker/rules/web/avoid-crm2011-service-odata) should detect usage in client-side code.
 
 #### Limitation
 
@@ -97,7 +99,7 @@ Here are some examples:
 - 'pageViews' name column will most often have a value like 'EditForm Load - opportunity' where it's a concatenation of two columns(pageName - entityName) in the 'customDimensions'. Using this column might be a bit more convenient than parsing the other two values.
 - 'requests' name column will have the value of 'Organization Service Request' or 'Web API Request'
   - 'Web API Request' represent the [Microsoft Dataverse Web API](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/overview). This is the newest and recommended API.
-  - 'Organization Service Request' represent the requests to the [Organization Service](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/overview) 
+  - 'Organization Service Request' represent the requests to the [Organization Service](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/overview)
   **For this topic we are only interested in some of requests and they will have the 'name' value of 'Organization Service Request'.**
 - 'dependencies' name column has the widest variation. But where the 'type' is equal to "UCI REQUEST" the name is a duplication on the target column. It's the URL of the resource request.
 
@@ -122,6 +124,7 @@ Example of viewing the Session ID in Model Driven App
 An 'operation_Id' can be used to associate telemetry from a single operation in Application Insights. For example the when opening an Model Driven App Account Form is an operation. This action is assigned an 'operation_Id'. Using [Transaction Search](https://learn.microsoft.com/en-us/azure/azure-monitor/app/diagnostic-search) with an 'operation_Id' quickly shows the association of 'pageViews', 'dependencies', 'requests' and 'exceptions' Tables. 'operation_Id is also the field used when performing a join when querying the Logs.
 
 #### Example Queries
+
 Let's look at some example queries useful for finding "organizationdata.svc" requests in Application Insights Logs
 !['Application Insights Logs'](./AI_LOGS.png)
 
@@ -157,7 +160,7 @@ You'll notice at the top of each query I've added 'starttime' and 'endtime'. Upd
 
 List all "OrganizationData.svc" in 'requests' table with most valuable attributes for identification
 
-``` KUSTO 
+``` KUSTO
 let starttime = todatetime('2023-04-6T00:00Z');
 let endtime =  todatetime('2023-04-10T23:59Z');
 requests
@@ -169,7 +172,7 @@ requests
 
 Add some aggregation with the [summarize operator](https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/aggregation-functions) to allow for easier consumption.
 
-Below we summarize to get a count of the requests by user_Id,  operation_Name and use the [bin](https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/binfunction) function to bucket all requests in a 15 minute time period. 
+Below we summarize to get a count of the requests by user_Id,  operation_Name and use the [bin](https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/binfunction) function to bucket all requests in a 15 minute time period.
 
 ``` KUSTO
 let starttime = todatetime('2023-04-6T00:00Z');
@@ -260,3 +263,104 @@ Review the offending code. Often an 'organizationdata.svc' request involves mult
 
 The example below shows the two functions involved and they are in a single file. In this instance the JavaScript webresource ```cr6fa_oData2ExampleScript.js``` function ```getOwnerDetails``` passes a OData2 query to ```MakeRequest``` function which performs the request.
 ![Code](./code.png)
+
+### Updating your Code
+
+Suggestions can be found in [this documentation](https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/best-practices/business-logic/do-not-use-odata-v2-endpoint?tabs=odatav2).
+
+When updating JavaScript the recommended approach is to use Xrm.WebApi. Xrm.WebApi is async and has the potential to improve the end-user experience. The [Xrm.WebApi Documents](https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/clientapi/reference/xrm-webapi) have many examples. I do recommend heading over to check out my [colleague’s blog post Async Await patterns]( https://community.dynamics.com/365/b/crminthefield/posts/get-a-value-from-dynamics-365-ce-api-with-async-await-484252633).
+
+There are multiple patterns for executing async JavaScript and I'm showing one sample of refactoring code below.
+
+#### **Old ODATA2 Code**
+
+``` javascript
+"use strict";
+function getOwnerDetails(executionContext ) {
+    var formContext = executionContext.getFormContext();
+    var lookupObj = formContext.getAttribute("ownerid");
+
+    if (lookupObj != null) {
+        var lookUpObjVal = lookupObj.getValue();
+        if ((lookUpObjVal != null)) {
+            var lookupId = lookUpObjVal[0].id;
+        }
+    }
+    var selectQuery = "?&$filter=SystemUserId eq guid'" + lookupId + "'&$select=JobTitle, FullName";
+    var oDataResult = null;
+    oDataResult = MakeRequest("SystemUserSet",selectQuery);
+    var nameAndTitle = null;
+    if(oDataResult!==null)
+    {
+        nameAndTitle = oDataResult[0].FullName + " - "+ oDataResult[0].JobTitle;
+    }  
+
+    return nameAndTitle;
+}
+
+"use strict";
+function MakeRequest(table, query) {
+    var globalContext = Xrm.Utility.getGlobalContext();
+    var serverUrl = globalContext.getClientUrl();
+    var oDataEndpointUrl = serverUrl + "/XRMServices/2011/OrganizationData.svc/"+ table;
+    oDataEndpointUrl += query;
+    var req = new XMLHttpRequest();
+    if (req != null) {
+        req.open("GET", oDataEndpointUrl, false);
+        req.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        req.setRequestHeader("Accept", "application/json, text/javascript, */*");
+        req.send(null);
+        var retrieved = JSON.parse(req.responseText).d;
+        var results = new Array();
+        for (var i = 0; i < retrieved.results.length; i++) {
+            results.push(retrieved.results[i]);
+        }
+        return results;
+    }
+    return null;
+}
+```
+
+#### **Code Updated to use WebApi**
+
+``` javascript
+"use strict";
+function getOwnerDetails(executionContext ) {
+    var formContext = executionContext.getFormContext();
+    var lookupObj = formContext.getAttribute("ownerid");
+
+    if (lookupObj != null) {
+        var lookUpObjVal = lookupObj.getValue();
+        if ((lookUpObjVal != null)) {
+            var lookupId = lookUpObjVal[0].id;
+        }
+    }
+    var query = "?$select=jobtitle, fullname";    
+    Xrm.WebApi.retrieveRecord("systemuser", lookupId, query).then(
+        function success(result) {
+            var nameAndTitle = null;
+            if(result!==null)
+            {
+                try
+                {
+                    nameAndTitle = result.fullname + " - "+ result.jobtitle;
+                }
+                catch(error)
+                {
+                    // handle error conditions
+                    var alertStrings = { confirmButtonLabel: "Yes", text: "Error Returning Results " + error};
+                    var alertOptions = { height: 120, width: 260 }; 
+                    Xrm.Navigation.openAlertDialog(alertStrings, alertOptions);
+                }
+            }              
+            return nameAndTitle;
+        },
+        function (error) {
+            // handle error conditions
+            var alertStrings = { confirmButtonLabel: "Yes", text: "Error Retrieving Record " + error};
+            var alertOptions = { height: 120, width: 260 }; 
+            Xrm.Navigation.openAlertDialog(alertStrings, alertOptions);
+        }
+    );    
+}
+```
